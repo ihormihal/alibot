@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Aliexpress Fast Deals",
+  "description": "This extension help to buy in Aliexpress Fast Deals.",
+  "version": "1.0",
+  
+  "icons": {
+    "220": "img/icon220.png",
+    "120": "img/icon120.png",
+    "64": "img/icon64.png",
+    "48": "img/icon48.png",
+    "32": "img/icon32.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [ "*://*/*" ],
+      "js": [ "js/jquery-2.1.1.min.js","js/content.js" ]
+    }
+  ],
+  "web_accessible_resources": ["js/inject_script.js"],
+  "background": {
+    "scripts": ["js/background.js"]
+  },
+  "permissions": [
+    "http://m.aliexpress.com/*"
+  ],
+  "browser_action": {
+    "default_title": "Aliexpress Fast Deals",
+    "default_icon": "img/icon32.png",
+    "default_popup": "popup.html"
+  }
+}
