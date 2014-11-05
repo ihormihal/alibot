@@ -7,3 +7,13 @@
 #fast-deals-helper .helper-form-group {}
 #fast-deals-helper .helper-form-group label {height: 32px; line-height: 32px; display: inline-block; margin-right: 10px;}
 #fast-deals-helper input, #fast-deals-helper select {height: 32px; line-height: 32px; display: inline-block;}
+
+#fast-deals-helper #helper-buy-button {
+	display: block; padding: 15px 0; margin-top: 15px; 
+	width: 100%; color: #fff; text-align: center; 
+	background: #e62e04; opacity: 0.8; 
+	border-radius: 3px;
+	font-weight: bold; font-size: 24px;
+	text-decoration: none; text-transform: uppercase;
+}
+#fast-deals-helper #helper-buy-button:hover {opacity: 1;}
