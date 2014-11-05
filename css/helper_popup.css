@@ -1,0 +1,9 @@
+#fast-deals-helper {
+	position: fixed; right: 20px; top: 20px; z-index: 9000;
+	background: #eee;
+	padding: 15px;
+	border-radius: 3px;
+}
+#fast-deals-helper .helper-form-group {}
+#fast-deals-helper .helper-form-group label {height: 32px; line-height: 32px; display: inline-block; margin-right: 10px;}
+#fast-deals-helper input, #fast-deals-helper select {height: 32px; line-height: 32px; display: inline-block;}
