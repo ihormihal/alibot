@@ -28,7 +28,8 @@
   "permissions": [
     "http://m.aliexpress.com/*",
     "http://gaga.aliexpress.com/*",
-    "http://group.aliexpress.com/*"
+    "http://group.aliexpress.com/*",
+    "http://activities.aliexpress.com/*"
   ],
   "browser_action": {
     "default_title": "Aliexpress Fast Deals",
