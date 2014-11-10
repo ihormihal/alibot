@@ -1,4 +1,5 @@
 //http://m.aliexpress.com/group/255963063-2052686069-detail.html?fromApp=true&promotionType=GagaGroup&lang=ru;
+var formLoaded = new CustomEvent("formLoaded", {});
 
 var noscript = document.getElementsByTagName('noscript')[0];
 var imgStr = noscript.innerHTML;
@@ -34,16 +35,12 @@ appendHtml(document.body, '<div id="fast-deals-helper" data-dealtime="'+dealTime
 //gaga.aliexpress.com/order/orderConfirm?q=1&productId=2052686069&skuAttr=200000828:200003982
 //appendHtml(document.body, '<div id="fast-deals-helper"><form method="get" action="http://group.aliexpress.com/order/confirm_order.htm">'+helperFormPID+helperFormCID+helperFormQ+helperFormAPP+helperFormC+skuVariants+helperFormB'</form></div>');
 
-var formLoaded = new CustomEvent('formLoaded', { detail: state });
+
 function appendHtml(el, str) {
   var div = document.createElement('div');
   div.innerHTML = str;
   while (div.children.length > 0) {
     el.appendChild(div.children[0]);
   }
-  document.dispatchEvent(formLoaded);
+  document.body.dispatchEvent(formLoaded);
 }
-
-//document.addEventListener('formLoaded', function (e) {
-	//console.log('formLoaded');
-//}, false);
