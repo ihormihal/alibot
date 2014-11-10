@@ -56,6 +56,11 @@ document.body.addEventListener('formLoaded', function(e) {
 
 	//Обновленный, синхронизированный таймер, получаем актуальное время старта относительно локальных часов
 	timeToDeal = (dealTime*1000 - new Date().getTime()) - synchroTime - lastPingTime;
+	console.log(timeToDeal);
 
-	console.log(timeToDeal); //
+	setTimeout(startBuy,timeToDeal)
 });
+
+function startBuy (){
+	//Основной запрос для покупки
+}
