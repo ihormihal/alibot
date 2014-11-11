@@ -13,7 +13,12 @@
   },
   "content_scripts": [
     {
-      "matches": [ "*://*/*" ],
+      //"matches": [ "*://*/*" ],
+      "matches": [
+      "http://m.aliexpress.com/*",
+      "http://gaga.aliexpress.com/*",
+      "http://group.aliexpress.com/*"
+    ],
       "js": [ 
               //"js/jquery-2.1.1.min.js",
               "js/content.js" 
