@@ -6,8 +6,6 @@ s.onload = function() {
 };
 (document.head||document.documentElement).appendChild(s);
 
-//main app
-//http://m.aliexpress.com/group/255963063-2052686069-detail.html?fromApp=true&promotionType=GagaGroup&lang=ru
 function pingTime() {
 	var pingStart = new Date().getTime();
 	var helperRequest = new XMLHttpRequest;
@@ -24,109 +22,112 @@ var getParams = {
 	'objectId': '',
 	'promotionId': '',
 	'quantity': 1,
-	'countryCode': 'US',
-	'skuAttr': ''
+	'skuAttr': '',
+	'countryCode': 'US'
 };
-var params1 = {'fromApp':'true','promotionType':'GagaGroup'};
-document.body.addEventListener('formLoaded', function(e) {
 
+document.body.addEventListener('formLoaded', function(e) {
+	//console.log(e);
 	getParams.objectId = e.detail.objectId;
 	getParams.promotionId = e.detail.promotionId;
-	getParams.skuAttr = e.detail.skuAttr;
+	var skuAttr = e.detail.skuAttr;
+
+	skuAttr = skuAttr.replace(':','%3A');
+	skuAttr = skuAttr.replace('#','%23');
+	skuAttr = skuAttr.replace(';','%3B');
+
+	getParams.skuAttr = skuAttr;
 
     var dealTime = e.detail.dealTime;
     var server = pingTime();
 	var timeToDeal = dealTime - server.time;
-	var timeInterval = 7;
 
 	//Пингуем в течении N(5) секунд (до начала за timeInterval секунд)
-	var synchroTimePre = 0;
+	var synchroTimePre = synchroTime = 0;
 	var tempPre = 0;
 	var lastPingTime = 0;
 
-	while(timeToDeal <= timeInterval && timeToDeal > (timeInterval-3)){
-		server = pingTime();
-		timeToDeal = dealTime - server.time;
-
-		//Получаем актуальную секунду
-		if(server.time > tempPre){
-			synchroTime = (server.time)*1000 - new Date().getTime(); //на сколько локальные часы отстают от серверных
-			//Получаем максимальную разницу, которая встретилась
-			if(synchroTimePre > synchroTime){
-				synchroTime = synchroTimePre;
-			}
-		}
-		tempPre = server.time;
-		lastPingTime = server.ping;
+	//Включаем таймер, если осталось менее 120 сек
+	if(timeToDeal < 60 && timeToDeal > 0){
+		console.log('Запускаем обратный отсчет! Начнем пинговать актуальное время через: ' + timeToDeal + ' секунд!');
+		var pingTimer = setInterval(pingTimer,1000);
 	}
+	
 
-	//Обновленный, синхронизированный таймер, получаем актуальное время старта относительно локальных часов
-	timeToDeal = (dealTime*1000 - new Date().getTime()) - synchroTime - lastPingTime;
+	function pingTimer(){
+		var currentTime = new Date().getTime();
+		if((dealTime*1000 - currentTime) <= 7000){
+			clearInterval(pingTimer);
+			console.log('Начнем пинговать актуальное время!');
+			while(timeToDeal > 3){
+				server = pingTime();
+				timeToDeal = dealTime - server.time;
 
-	setTimeout(startBuy,timeToDeal);
+				//Получаем актуальную секунду
+				if(server.time > tempPre){
+					synchroTime = (server.time)*1000 - new Date().getTime(); //на сколько локальные часы отстают от серверных
+					//Получаем максимальную разницу, которая встретилась
+					if(synchroTimePre > synchroTime){
+						synchroTime = synchroTimePre;
+					}
+				}
+				tempPre = server.time;
+				//lastPingTime = server.ping;
+			}
+
+			//Обновленный, синхронизированный таймер, получаем актуальное время старта относительно локальных часов
+			timeToDeal = (dealTime*1000 - new Date().getTime()) - synchroTime;
+			console.log('Внимание! Старт через: '+timeToDeal+' мс!');
+			setTimeout(startBuy,timeToDeal);
+		}
+	}
+	
+
 	document.body.addEventListener('skuChanged', function(e) {
 		getParams.skuAttr = e.detail;
 	});
 	document.getElementById('helper-buy-button').addEventListener('click', function(e) {
 		e.preventDefault;
-		startBuy(params1);
+		startBuy(getParams);
 	});
 });
 
+var captchaStyle = '<style>.captcha-box{position: fixed;background: #fff;top: 0;bottom: 0;left: 0;right: 0;padding-left: 40%;}</style>';
 
-
-//var HelperGetUrl = 'http://gaga.aliexpress.com/order/confirm_order.htm?objectId='+helperPID+'&promotionId='+helperCID+'&quantity=1&countryCode=US&skuAttr='+skuAttr;
-
-function startBuy1 (params){
-	//Основной запрос для покупки
-	var prm = '';
-	for(i in params){
-		prm = prm+i+'='+params[i]+'&';
-	}
-	var orderRequest = new XMLHttpRequest;
-	orderRequest.open('GET', 'http://m.aliexpress.com/group/255963063-2052686069-detail.html?'+prm, false);
-	orderRequest.send(null);
-	if(orderRequest.status == 200) {
-		var response = orderRequest.responseText;
-		if(response.indexOf('sku-dialog') !== -1){
-			var parser = new DOMParser();
-			var doc = parser.parseFromString(response, "text/html");
-			var form = doc.getElementById('sku-dialog');
-			form.style.display = 'block';
-			document.body.innerHTML = form.outerHTML;
-			document.getElementById('captcha-input').focus();
-		}else{
-			console.log('no form');
-		}
-	}
-}
-
-
-//childNodes
-//lastChild 
-//children 
-//lastElementChild 
-
+var repeat_limit = 15;
+var repeat_i = 0;
 function startBuy (params){
 	//Основной запрос для покупки
+	console.log('Старт!');
+
 	var prm = '';
 	for(i in params){
 		prm = prm+i+'='+params[i]+'&';
 	}
+	prm = prm.slice(0,-1);
+	
 	var orderRequest = new XMLHttpRequest;
-	orderRequest.open('GET', 'http://gaga.aliexpress.com/order/confirm_order.htm?'+prm, false);
+	orderRequest.open('GET', 'http://group.aliexpress.com/order/confirm_order.htm?'+prm, false);
 	orderRequest.send(null);
 	if(orderRequest.status == 200) {
+		console.log('Вводи код с капчи!!! Жми Enter!');
 		var response = orderRequest.responseText;
 		if(response.indexOf('place-order-form') !== -1){
 			var parser = new DOMParser();
 			var doc = parser.parseFromString(response, "text/html");
 			var form = doc.getElementById('place-order-form');
 			form.style.display = 'block';
-			document.body.innerHTML = form.outerHTML;
+			var action = form.getAttribute('action');
+			form.action = 'http://group.aliexpress.com'+action;
+			document.body.innerHTML = form.outerHTML+captchaStyle;
 			document.getElementById('captcha-input').focus();
 		}else{
-			console.log('no form');
+			console.log('Сервер не готов! Повтор: '+repeat_i);
+			if(repeat_i<=repeat_limit){
+				startBuy(getParams);
+			}
 		}
 	}
+	repeat_i++;
+	
 }
