@@ -1,4 +1,8 @@
-//http://m.aliexpress.com/group/255963063-2052686069-detail.html?fromApp=true&promotionType=GagaGroup&lang=ru;
+window.onbeforeunload = function () {
+	console.log('reload blocked');
+	return false;
+}
+
 var noscript = document.getElementsByTagName('noscript')[0];
 var imgStr = noscript.innerHTML;
 var timeStr = imgStr.substring(imgStr.indexOf('time=')+5,imgStr.indexOf('time=')+15);
@@ -51,7 +55,7 @@ function skuChanged(el){
 var gotoMobile = '';
 var thisUrl = document.URL;
 if(thisUrl.indexOf('m.aliexpress.com') == -1){
-	var mobileUrl = 'http://m.aliexpress.com/group/'+thisUrl.substring(thisUrl.lastIndexOf('.com/')+5,thisUrl.lastIndexOf('-detail.html'))+'-detail.html';
+	var mobileUrl = 'http://m.aliexpress.com/group/'+thisUrl.substring(thisUrl.lastIndexOf('.com/')+5,thisUrl.lastIndexOf('-detail.html'))+'-detail.html?fromApp=true';
 	gotoMobile = '<a href="'+mobileUrl+'">Mobile Site</a>';
 }
 

@@ -6,6 +6,10 @@ s.onload = function() {
 };
 (document.head||document.documentElement).appendChild(s);
 
+var buyTimer;
+var currentTime;
+var baseGet = 'http://group.aliexpress.com/order/confirm_order.htm?';
+
 function pingTime() {
 	var pingStart = new Date().getTime();
 	var helperRequest = new XMLHttpRequest;
@@ -16,6 +20,7 @@ function pingTime() {
 		var pingEnd = new Date().getTime();
 		return {'ping' : pingEnd-pingStart, 'time' : serverTime};
 	}
+
 }
 
 var getParams = {
@@ -27,7 +32,6 @@ var getParams = {
 };
 
 document.body.addEventListener('formLoaded', function(e) {
-	//console.log(e);
 	getParams.objectId = e.detail.objectId;
 	getParams.promotionId = e.detail.promotionId;
 	var skuAttr = e.detail.skuAttr;
@@ -39,46 +43,41 @@ document.body.addEventListener('formLoaded', function(e) {
 	getParams.skuAttr = skuAttr;
 
     var dealTime = e.detail.dealTime;
-    var server = pingTime();
-	var timeToDeal = dealTime - server.time;
+    currentTime = new Date().getTime();
+	var timeToDeal = dealTime - (currentTime/1000);
 
-	//Пингуем в течении N(5) секунд (до начала за timeInterval секунд)
-	var synchroTimePre = synchroTime = 0;
-	var tempPre = 0;
+	var synchroTime = 0;
 	var lastPingTime = 0;
 
-	//Включаем таймер, если осталось менее 120 сек
-	if(timeToDeal < 60 && timeToDeal > 0){
+	//Включаем таймер, если осталось менее 30 сек
+	if(timeToDeal < 30 && timeToDeal > 1){
 		console.log('Запускаем обратный отсчет! Начнем пинговать актуальное время через: ' + timeToDeal + ' секунд!');
 		var pingTimer = setInterval(pingTimer,1000);
 	}
 	
-
 	function pingTimer(){
-		var currentTime = new Date().getTime();
-		if((dealTime*1000 - currentTime) <= 7000){
+		currentTime = new Date().getTime();
+		if((dealTime*1000 - currentTime) <= 10000){
 			clearInterval(pingTimer);
-			console.log('Начнем пинговать актуальное время!');
-			while(timeToDeal > 3){
-				server = pingTime();
-				timeToDeal = dealTime - server.time;
-
-				//Получаем актуальную секунду
-				if(server.time > tempPre){
-					synchroTime = (server.time)*1000 - new Date().getTime(); //на сколько локальные часы отстают от серверных
-					//Получаем максимальную разницу, которая встретилась
-					if(synchroTimePre > synchroTime){
-						synchroTime = synchroTimePre;
-					}
-				}
-				tempPre = server.time;
-				//lastPingTime = server.ping;
-			}
+			console.log('Получаем актуальное время!');
+			server = pingTime();
+			timeToDeal = dealTime - server.time;
 
 			//Обновленный, синхронизированный таймер, получаем актуальное время старта относительно локальных часов
-			timeToDeal = (dealTime*1000 - new Date().getTime()) - synchroTime;
+			timeToDeal = (dealTime*1000 - new Date().getTime()) - server.ping - 300;
 			console.log('Внимание! Старт через: '+timeToDeal+' мс!');
-			setTimeout(startBuy,timeToDeal);
+
+			var getString = '';
+			for(i in getParams){
+				getString = getString+i+'='+getParams[i]+'&';
+			}
+			getString = baseGet+getString.slice(0,-1);
+
+			setTimeout(function(){
+				buyTimer = setInterval(function(){
+					startRequest(getString);
+				},250);
+			},timeToDeal);
 		}
 	}
 	
@@ -88,46 +87,47 @@ document.body.addEventListener('formLoaded', function(e) {
 	});
 	document.getElementById('helper-buy-button').addEventListener('click', function(e) {
 		e.preventDefault;
-		startBuy(getParams);
+		var getString = '';
+		for(i in getParams){
+			getString = getString+i+'='+getParams[i]+'&';
+		}
+		getString = baseGet+getString.slice(0,-1);
+		buyTimer = setInterval(function(){
+			startRequest(getString);
+		},500);
 	});
 });
 
 var captchaStyle = '<style>.captcha-box{position: fixed;background: #fff;top: 0;bottom: 0;left: 0;right: 0;padding-left: 40%;}</style>';
 
-var repeat_limit = 15;
-var repeat_i = 0;
-function startBuy (params){
-	//Основной запрос для покупки
-	console.log('Старт!');
-
-	var prm = '';
-	for(i in params){
-		prm = prm+i+'='+params[i]+'&';
+var counter = 0;
+var orderRequest = new XMLHttpRequest;
+function startRequest(url){
+	if(counter > 7){
+		clearInterval(buyTimer);
 	}
-	prm = prm.slice(0,-1);
-	
-	var orderRequest = new XMLHttpRequest;
-	orderRequest.open('GET', 'http://group.aliexpress.com/order/confirm_order.htm?'+prm, false);
-	orderRequest.send(null);
-	if(orderRequest.status == 200) {
-		console.log('Вводи код с капчи!!! Жми Enter!');
-		var response = orderRequest.responseText;
-		if(response.indexOf('place-order-form') !== -1){
-			var parser = new DOMParser();
-			var doc = parser.parseFromString(response, "text/html");
-			var form = doc.getElementById('place-order-form');
-			form.style.display = 'block';
-			var action = form.getAttribute('action');
-			form.action = 'http://group.aliexpress.com'+action;
-			document.body.innerHTML = form.outerHTML+captchaStyle;
-			document.getElementById('captcha-input').focus();
-		}else{
-			console.log('Сервер не готов! Повтор: '+repeat_i);
-			if(repeat_i<=repeat_limit){
-				startBuy(getParams);
+	orderRequest.open('GET', url, true);
+	counter++;
+	orderRequest.onreadystatechange = function() {
+		if (orderRequest.readyState == 4) {
+			if(orderRequest.status == 200) {
+				var response = orderRequest.responseText;
+				if(response.indexOf('place-order-form') !== -1){
+					clearInterval(buyTimer);
+					console.log('Вводи код с капчи!!! Жми Enter!');
+					var parser = new DOMParser();
+					var doc = parser.parseFromString(response, "text/html");
+					var form = doc.getElementById('place-order-form');
+					form.style.display = 'block';
+					var action = form.getAttribute('action');
+					form.action = 'http://group.aliexpress.com'+action;
+					document.body.innerHTML = form.outerHTML+captchaStyle;
+					document.getElementById('captcha-input').focus();
+				}else{
+					console.log('Сервер не готов! Повтор:'+counter);
+				}
 			}
 		}
-	}
-	repeat_i++;
-	
+	};
+	orderRequest.send(null);
 }
